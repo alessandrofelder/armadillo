@@ -23,6 +23,8 @@ def writeITAsForAllTiffsInDirectory(directory,percentageThickness):
 		thicknessNames.append(thicknessTuple[1])
 		thicknessMeasurements.append(floor(float(thicknessTuple[2])))
 	
+	print(thicknessNames)
+
 	#other setting up
 	percentThicknessUsedAsCutoff = str(int(percentageThickness*100))
 	edgeCoordsFilePrefix = '../edge-coordinates/edge-coordinates-percThick-'+percentThicknessUsedAsCutoff
@@ -41,7 +43,7 @@ def writeITAsForAllTiffsInDirectory(directory,percentageThickness):
 	    	print(currentThickness)
 	    	counter=counter+1
 			
-			#execute ITA	    
+		#execute ITA	    
 	        currentImageName = os.path.join(directory, fileName)
 	        currentImage = IJ.openImage(currentImageName)
 	        IJ.run(currentImage, "Set Scale...", "distance=0 known=0 pixel=1 unit=pixel");
@@ -69,10 +71,11 @@ def writeITAsForAllTiffsInDirectory(directory,percentageThickness):
 	        currentEdgeList = wrapperInstance.getOutput("centroidTable")
 	        edgeFile = open(edgeCoordsFilePrefix+os.path.splitext(fileName)[0]+'.csv',"w")
 	        edgeWriter = csv.writer(edgeFile, delimiter=',')
-	        for i in range(len(currentEdgeList[0])):
-	        	edgeRow = [currentEdgeList[0][i],currentEdgeList[1][i],currentEdgeList[2][i],currentEdgeList[3][i],currentEdgeList[4][i],currentEdgeList[5][i]]
-	        	edgeWriter.writerow(edgeRow)
-	        edgeFile.close()
+	        if currentEdgeList:
+			for i in range(len(currentEdgeList[0])):
+		        	edgeRow = [currentEdgeList[0][i],currentEdgeList[1][i],currentEdgeList[2][i],currentEdgeList[3][i],currentEdgeList[4][i],currentEdgeList[5][i]]
+		        	edgeWriter.writerow(edgeRow)
+		        edgeFile.close()
 				
 	        #save percentages
 	        currentPercentageList =	wrapperInstance.getOutput("culledEdgePercentagesTable")
@@ -86,8 +89,11 @@ def writeITAsForAllTiffsInDirectory(directory,percentageThickness):
 	    else:
 	        continue
 
-workingDirectory = "/home/alessandro/Documents/data/ITA/cat-test/skeleton/"
-os.chdir(workingDirectory)
+workingDirectories = ["/home/alessandro/Documents/data/ITA/cat-test/despeckle/skeleton/"]
 
-for i in range(1,9):
-	writeITAsForAllTiffsInDirectory(workingDirectory,float(i)/10.0)
+for j in range(0,1):
+	os.chdir(workingDirectories[j])
+	for i in range(1,11):
+		print(workingDirectories[j])	
+		writeITAsForAllTiffsInDirectory(workingDirectories[j],float(i)/10.0)
+
