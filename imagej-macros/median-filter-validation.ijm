@@ -1,6 +1,6 @@
 run("Close All")
-dir = "/home/alessandro/Documents/data/ITA/cat-test/"
-originalName = "RVC_domestic_cat_head_IJ_isodata_purified"
+dir = "/home/alessandro/Documents/data/median-filter-test/"
+originalName = "tubes-15-pixels-long-with-diameter-1-3-5-and-20-pixels"
 for (i=1; i<35; i=i+1) 
 {
 	open(dir+originalName+".tif");

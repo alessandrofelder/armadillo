@@ -85,7 +85,7 @@ breakNumber <- function(n)
 
 doCorrelationTests <- function(masses, data) {
   print(substitute(data))
-  if (length(masses) > 2)
+  if (length(unique(masses)) > 2)
   {
     for (var.index in 2:9)
     {
@@ -332,11 +332,11 @@ if (testrun)
   working.directory <- "~/Documents/data/ITA-test/"
 } else
 {
-  working.directory <- "~/Documents/data/ITA/cat-test/"
+  working.directory <- "~/Documents/data/ITA/cat-test/despeckle/"
 }
 
 setwd(working.directory)
-for (current.perc.thickness in ((3:8) * 10))
+for (current.perc.thickness in ((1:19) * 10))
 {
   binomial.to.mass.map <- c()
   file.to.binomial.map <- c()
@@ -401,13 +401,50 @@ for (current.perc.thickness in ((3:8) * 10))
   five.node.data <- raw.data.frame[, 1:4 == 3]
   six.node.data <- raw.data.frame[, 1:4 == 4]
   
+  three.node.data <- as.matrix(three.node.data)
+  four.node.data <- as.matrix(four.node.data)
+  five.node.data <- as.matrix(five.node.data)
+  six.node.data <- as.matrix(six.node.data)
+
+
   colnames(three.node.data) <- unlist(three.node.data[1,])
   colnames(four.node.data) <- unlist(four.node.data[1,])
   colnames(five.node.data) <- unlist(five.node.data[1,])
   colnames(six.node.data) <- unlist(six.node.data[1,])
-  
   unlisted <- unlist(three.node.data[1,])
-  for (i in 1:length(three.node.data))
+  
+  # temp.col.names <- c()
+  # if(length(dim(three.node.data))==2)
+  #   temp.col.names <- unlist(three.node.data[1,])
+  # else
+  #   temp.col.names <- three.node.data[1]
+  # colnames(three.node.data) <- temp.col.names
+  # 
+  # if(length(dim(four.node.data))==2)
+  #   temp.col.names <- unlist(four.node.data[1,])
+  # else
+  #   temp.col.names <- four.node.data[1]
+  # colnames(four.node.data) <- temp.col.names
+  # 
+  # if(length(dim(five.node.data))==2)
+  #   temp.col.names <- unlist(five.node.data[1,])
+  # else
+  #   temp.col.names <- five.node.data[1]
+  # colnames(five.node.data) <- temp.col.names
+  # 
+  # if(length(dim(six.node.data))==2)
+  #   temp.col.names <- unlist(six.node.data[1,])
+  # else
+  #   temp.col.names <- six.node.data[1]
+  # colnames(six.node.data) <- temp.col.names
+  # 
+  # unlisted <- c()
+  # if(length(dim(three.node.data))==2)
+  #   unlisted <- unlist(three.node.data[1,])
+  # else
+  #   unlisted <- three.node.data[1]
+  
+  for (i in 1:length(colnames(three.node.data)))
   {
     current.file <- unlisted[i]
     binary.file <-
@@ -428,6 +465,7 @@ for (current.perc.thickness in ((3:8) * 10))
   }
   
   abbreviated.names[which(abbreviated.names=="")]<-"NA"
+  abbreviated.names <- abbreviated.names[!abbreviated.names=="NA"]
   mass.data <- Filter(function(m) m>0.0, mass.data)
   mass.data <- as.matrix(mass.data)
   
@@ -484,8 +522,8 @@ for (current.perc.thickness in ((3:8) * 10))
   indices.to.keep = mass.data[,1]>1e3 & mass.data[,1]<15e3
   mass.data <- mass.data[indices.to.keep]
   abbreviated.names <- abbreviated.names[indices.to.keep]
-  three.node.data <- three.node.data[,indices.to.keep]
-  four.node.data <- four.node.data[,indices.to.keep]
+  three.node.data <- as.matrix(three.node.data[,indices.to.keep])
+  four.node.data <- as.matrix(four.node.data[,indices.to.keep])
   
   for (var.index in c(2, 3, 5, 9, 4, 6, 7, 8))
   {
