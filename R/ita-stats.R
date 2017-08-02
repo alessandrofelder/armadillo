@@ -55,7 +55,6 @@ getAngleInfo <- function(angles, file.name, histogram) {
   info$sd <- sd(angles, na.rm = TRUE)
   info$median <- median(angles, na.rm = TRUE)
   info$swp <- shapiroTestWrapper(angles)$p
-  info$logswp <- shapiroTestWrapper(log(angles))$p
   info$mode <- histogram$mids[which.max(histogram$counts)]
   if (is.null(info$mode))
     info$mode <- NA_real_
@@ -85,9 +84,9 @@ breakNumber <- function(n)
 
 doCorrelationTests <- function(masses, data) {
   print(substitute(data))
-  if (length(unique(masses)) > 2)
+  if (length(unique(masses)) > 2 && length(unique(data[2,])) > 2)
   {
-    for (var.index in 2:9)
+    for (var.index in 2:8)
     {
       print(var.index)
       print(var.names[var.index])
@@ -121,14 +120,15 @@ robustRadiansReader = function(file.name)
 }
 
 saveITAHistogram <-
-  function(hist, valence, name, perc.thickness) {
+  function(hist, valence, filename, name, perc.thickness) {
     histogram <- eval(hist)
-    no.space.name = gsub(pattern = " ", replacement = "-",name)
-    pdf(paste0("../../individual-plots/histo-valence",valence,"-thickness-",perc.thickness,"-",no.space.name,".pdf"))
+    no.space.name = gsub(pattern = " ", replacement = "-",filename)
+    png(paste0("../../individual-plots/histo-valence",valence,"-",gsub(".csv","",no.space.name),".png"))
     plot(
       histogram,
       freq = FALSE,
       xlim = c(0, 180),
+      ylim = c(0,max(7,histogram$density)),
       xaxt = 'n',
       xlab = "angle [\U00B0]",
       ylab = "bin frequency %",
@@ -137,8 +137,8 @@ saveITAHistogram <-
         valence,
         "-valent-nodes)\n",
         name,
-        " ",
-        perc.thickness
+        ", cutoff ",
+        perc.thickness,"% average thickness"
       ),
       col = cbbPalette[valence - 2]
     )
@@ -191,7 +191,12 @@ computeITAStats <- function(file.name, map, verbose)
   local.map <- eval(map)
   index <- which(tiff.file.name == file.to.binomial.map$file.name)
   binomial <- file.to.binomial.map$file.name[index]
-  
+  plot.title.name <- file.name
+  if (run==2)
+  {
+    plot.title.name <- paste0(gsub(pattern = "\\D", replacement = "", unlist(strsplit(file.name,"-"))[4])," ",current.noise.removal.operation," operations")
+  }
+    
   if (length(angles3) > 0)
   {
       histogram3 <-
@@ -201,7 +206,8 @@ computeITAStats <- function(file.name, map, verbose)
     saveITAHistogram(
       histogram3,
       valence = val,
-      name = file.name,
+      filename = file.name,
+      name = plot.title.name,
       perc.thickness = current.perc.thickness
     )
   }
@@ -214,7 +220,8 @@ computeITAStats <- function(file.name, map, verbose)
     saveITAHistogram(
       histogram4,
       valence = val,
-      name = file.name,
+      filename = file.name,
+      name = plot.title.name,
       perc.thickness = current.perc.thickness
     )
   }
@@ -227,7 +234,8 @@ computeITAStats <- function(file.name, map, verbose)
     saveITAHistogram(
       histogram5,
       valence = val,
-      name = file.name,
+      filename = file.name,
+      name = plot.title.name,
       perc.thickness = current.perc.thickness
     )
   }
@@ -240,7 +248,8 @@ computeITAStats <- function(file.name, map, verbose)
     saveITAHistogram(
       histogram6,
       valence = val,
-      name = file.name,
+      filename = file.name,
+      name = plot.title.name,
       perc.thickness = current.perc.thickness
     )
   }
@@ -294,8 +303,7 @@ computeITAStats <- function(file.name, map, verbose)
   #plot <- plot + scale_colour_hue(c=hue.vector, l=luminescence.vector)
   ggsave(
     filename = paste0(
-      "../../individual-plots/proportions-",gsub(pattern=' ', replacement="-",file.name),"-thickness-",current.perc.thickness,".pdf"
-    )
+      "../../individual-plots/proportions-",gsub(pattern='.csv', replacement="",file.name),".png")
   )
   
   results <-
@@ -313,7 +321,6 @@ computeITAStats <- function(file.name, map, verbose)
     printAngleInfo(angles4, file.name, histogram4)
     print("5-connected")
     printAngleInfo(angles5, file.name, histogram5)
-    print(results)
     print("6-connected")
     printAngleInfo(angles6, file.name, histogram6)
   }
@@ -322,17 +329,24 @@ computeITAStats <- function(file.name, map, verbose)
 }
 
 
-testrun <- FALSE
+run <- 2 #enum variable: 1=test on metal prints, 2=run as validation study, 3=run as scaling study
 #hue.vector <- c(100,100,50,100) #default:100
 #luminescence.vector <- c(65,65,40,65) #default:65
 
-
-if (testrun)
+current.noise.removal.operation <- "unknown"
+if (run==1)
 {
   working.directory <- "~/Documents/data/ITA-test/"
-} else
+} else if (run==2)
 {
   working.directory <- "~/Documents/data/ITA/cat-test/despeckle/"
+  current.noise.removal.operation <- "despeckle"
+} else if (run==3)
+{
+  working.directory <- "~/Documents/data/ITA/"
+} else 
+{
+    stop("invalid value for variable run")
 }
 
 setwd(working.directory)
@@ -341,7 +355,7 @@ for (current.perc.thickness in ((1:19) * 10))
   binomial.to.mass.map <- c()
   file.to.binomial.map <- c()
   
-  if (!testrun)
+  if (run==3)#scaling
   {
     binomial.to.mass.map <-
       read.table(
@@ -365,8 +379,32 @@ for (current.perc.thickness in ((1:19) * 10))
     abbreviated.names <-
       vector(mode = "character",
              length = length(file.to.binomial.map$file.name))
-  }
-  else{
+  } else if (run==2)
+  {
+    binomial.to.mass.map <-
+      read.table(
+        "PanTHERIA-extended.csv",
+        header = TRUE,
+        row.names = NULL,
+        stringsAsFactors = FALSE,
+        sep = ","
+      )
+    file.to.binomial.map <-
+      read.table(
+        "file-to-binomial-map.csv",
+        header = TRUE,
+        row.names = NULL,
+        stringsAsFactors = FALSE,
+        sep = ","
+      )
+    mass.data <-
+      vector(mode = "numeric",
+             length = length(file.to.binomial.map$file.name))
+    abbreviated.names <-
+      vector(mode = "character",
+             length = length(file.to.binomial.map$file.name))
+  } else
+      {
     binomial.to.mass.map$MSW05_Binomial = c("Rhombic dodecahedron", "Stochastic lattice")
     binomial.to.mass.map$X5.1_AdultBodyMass_g = c(10, 100)
     
@@ -392,10 +430,17 @@ for (current.perc.thickness in ((1:19) * 10))
   
   original.length <- length(raw.results)
   raw.results <- compact(raw.results)
+  if(length(raw.results)==0)
+  {
+    warning(paste0("ITA: no data for ",current.perc.thickness," % thickness cutoff"))
+    break
+  }
   difference <- original.length-length(raw.results)
   if(difference>0) warning(paste("Warning: deleted ",difference," null entries."))
   
   raw.data.frame <- as.data.frame(raw.results)
+  indicesOfEmptyFiles <- match(setdiff(angles.files, unique(unlist(raw.data.frame[1,]))),angles.files)
+  
   three.node.data <- raw.data.frame[, 1:4 == 1]
   four.node.data <- raw.data.frame[, 1:4 == 2]
   five.node.data <- raw.data.frame[, 1:4 == 3]
@@ -412,37 +457,6 @@ for (current.perc.thickness in ((1:19) * 10))
   colnames(five.node.data) <- unlist(five.node.data[1,])
   colnames(six.node.data) <- unlist(six.node.data[1,])
   unlisted <- unlist(three.node.data[1,])
-  
-  # temp.col.names <- c()
-  # if(length(dim(three.node.data))==2)
-  #   temp.col.names <- unlist(three.node.data[1,])
-  # else
-  #   temp.col.names <- three.node.data[1]
-  # colnames(three.node.data) <- temp.col.names
-  # 
-  # if(length(dim(four.node.data))==2)
-  #   temp.col.names <- unlist(four.node.data[1,])
-  # else
-  #   temp.col.names <- four.node.data[1]
-  # colnames(four.node.data) <- temp.col.names
-  # 
-  # if(length(dim(five.node.data))==2)
-  #   temp.col.names <- unlist(five.node.data[1,])
-  # else
-  #   temp.col.names <- five.node.data[1]
-  # colnames(five.node.data) <- temp.col.names
-  # 
-  # if(length(dim(six.node.data))==2)
-  #   temp.col.names <- unlist(six.node.data[1,])
-  # else
-  #   temp.col.names <- six.node.data[1]
-  # colnames(six.node.data) <- temp.col.names
-  # 
-  # unlisted <- c()
-  # if(length(dim(three.node.data))==2)
-  #   unlisted <- unlist(three.node.data[1,])
-  # else
-  #   unlisted <- three.node.data[1]
   
   for (i in 1:length(colnames(three.node.data)))
   {
@@ -462,13 +476,19 @@ for (current.perc.thickness in ((1:19) * 10))
       abbreviate(file.to.binomial.map$binomial[index])
     mass.data[i] <-
       getMassFromBinomial(file.to.binomial.map$binomial[index])
+    if(run==2)
+    {
+      mass.data[i] <- as.numeric(gsub(pattern = "\\D", replacement = "", file.to.binomial.map$file.name[index]))
+      abbreviated.names[i] <- " ";
+    }
   }
   
   abbreviated.names[which(abbreviated.names=="")]<-"NA"
   abbreviated.names <- abbreviated.names[!abbreviated.names=="NA"]
-  mass.data <- Filter(function(m) m>0.0, mass.data)
-  mass.data <- as.matrix(mass.data)
+  if(run!=2) mass.data <- Filter(function(m) m>0.0, mass.data)
   
+  mass.data <- as.matrix(mass.data)
+  mass.data <- as.matrix(mass.data[1:(length(mass.data)-length(indicesOfEmptyFiles))])
   var.names <-
     c(
       "file name",
@@ -477,7 +497,6 @@ for (current.perc.thickness in ((1:19) * 10))
       "standard deviation",
       "median",
       "SW test p value",
-      "logarithmic SW test p value",
       "mode",
       "proportion"
     )
@@ -519,13 +538,16 @@ for (current.perc.thickness in ((1:19) * 10))
   doCorrelationTests(mass.data, six.node.data)
   sink()
   
-  indices.to.keep = mass.data[,1]>1e3 & mass.data[,1]<15e3
-  mass.data <- mass.data[indices.to.keep]
-  abbreviated.names <- abbreviated.names[indices.to.keep]
-  three.node.data <- as.matrix(three.node.data[,indices.to.keep])
-  four.node.data <- as.matrix(four.node.data[,indices.to.keep])
+  if(run==1)
+  {
+    indices.to.keep = mass.data[,1]>1e3 & mass.data[,1]<15e3
+    mass.data <- mass.data[indices.to.keep]
+    abbreviated.names <- abbreviated.names[indices.to.keep]
+    three.node.data <- as.matrix(three.node.data[,indices.to.keep])
+    four.node.data <- as.matrix(four.node.data[,indices.to.keep])
+  }
   
-  for (var.index in c(2, 3, 5, 9, 4, 6, 7, 8))
+  for (var.index in c(2, 3, 5, 8, 4, 6, 7))
   {
     #set up data for plotting
     current.data <- data.frame(
@@ -551,7 +573,7 @@ for (current.perc.thickness in ((1:19) * 10))
                colour = valence,
                label = name,
                size=3
-             )) + geom_point()+geom_text_repel(aes(x = mass,y = ydata,label=name))
+             )) + geom_point(size=3)+geom_text_repel(aes(x = mass,y = ydata,label=name),show.legend = FALSE)
     
     #beautify plot
     plot <- plot + scale_colour_manual(values = cbbPalette)# + scale_colour_hue(c=hue.vector, l=luminescence.vector)
@@ -565,14 +587,20 @@ for (current.perc.thickness in ((1:19) * 10))
     plot <-
       plot + ggtitle(var.names[var.index])+ ylab(var.names[var.index])
     
-    if (testrun)
+    if (run==1)
     {
       plot <-
         plot + scale_x_log10(breaks = c(1, 2),
                              labels = c("Rh. 12-hedron", "Stochastic")) +
-        xlab("lattice") 
+        xlab("lattice type") 
     }
-    else{
+    else if(run==2)
+    {
+        plot <-
+        plot +
+        xlab(paste("number of ",current.noise.removal.operation,"operations"))
+    }
+    else if (run==3){
       plot <-
         plot +scale_x_log10()+xlab("mass")
     }
@@ -582,7 +610,7 @@ for (current.perc.thickness in ((1:19) * 10))
         current.perc.thickness,
         "-",
         var.names[var.index],
-        ".pdf"
+        ".png"
       )
     )
   }
