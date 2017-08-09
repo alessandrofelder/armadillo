@@ -89,11 +89,11 @@ def writeITAsForAllTiffsInDirectory(directory,percentageThickness):
 	    else:
 	        continue
 
-workingDirectories = ["/home/alessandro/Documents/data/ITA/cat-test/despeckle/skeleton/"]
+workingDirectories = ["/media/rvc_projects/Research_Storage/Doube_Michael/Felder/images/ITA-validation/median-7x7x7/skeleton"]
 
 for j in range(0,1):
 	os.chdir(workingDirectories[j])
-	for i in range(1,11):
+	for i in range(1,20):
 		print(workingDirectories[j])	
 		writeITAsForAllTiffsInDirectory(workingDirectories[j],float(i)/10.0)
 

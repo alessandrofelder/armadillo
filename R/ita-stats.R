@@ -194,7 +194,7 @@ computeITAStats <- function(file.name, map, verbose)
   plot.title.name <- file.name
   if (run==2)
   {
-    plot.title.name <- paste0(gsub(pattern = "\\D", replacement = "", unlist(strsplit(file.name,"-"))[4])," ",current.noise.removal.operation," operations")
+    plot.title.name <- paste0(gsub(pattern = "\\D", replacement = "", unlist(strsplit(file.name,"-"))[4])," ",current.noise.removal.operation)
   }
     
   if (length(angles3) > 0)
@@ -339,8 +339,25 @@ if (run==1)
   working.directory <- "~/Documents/data/ITA-test/"
 } else if (run==2)
 {
-  working.directory <- "~/Documents/data/ITA/cat-test/despeckle/"
-  current.noise.removal.operation <- "despeckle"
+  #working.directory <- "~/Documents/data/ITA/cat-test/despeckle/"
+  #current.noise.removal.operation <- "number of despeckle operations"
+  
+  #working.directory <- "~/Documents/data/ITA/cat-test/median-increasing-radius/"
+  #current.noise.removal.operation <- "3D median filter radius [voxels]"
+  
+  #working.directory <- "~/Documents/data/ITA/cat-test/erode-dilate/"
+  #current.noise.removal.operation <- "number of erode and dilate operations"
+
+  #working.directory <- "~/Documents/data/ITA/cat-test/median-3x3x3/"
+  #current.noise.removal.operation <- "number of 3D median filter (radius 1) operations"
+
+  #working.directory <- "~/Documents/data/ITA/cat-test/median-5x5x5/"
+  #current.noise.removal.operation <- "number of 3D median filter (radius 2) operations"
+  
+  working.directory <- "~/Documents/data/ITA/cat-test/median-7x7x7/"
+  current.noise.removal.operation <- "number of 3D median filter (radius 3) operations"
+  
+  
 } else if (run==3)
 {
   working.directory <- "~/Documents/data/ITA/"
@@ -350,7 +367,9 @@ if (run==1)
 }
 
 setwd(working.directory)
-for (current.perc.thickness in ((1:19) * 10))
+enumerationOfThicknessFiles = ((1:19) * 10)
+
+for (current.perc.thickness in enumerationOfThicknessFiles)
 {
   binomial.to.mass.map <- c()
   file.to.binomial.map <- c()
@@ -598,7 +617,7 @@ for (current.perc.thickness in ((1:19) * 10))
     {
         plot <-
         plot +
-        xlab(paste("number of ",current.noise.removal.operation,"operations"))
+        xlab(current.noise.removal.operation)
     }
     else if (run==3){
       plot <-
