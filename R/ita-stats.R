@@ -57,7 +57,9 @@ getAngleInfo <- function(angles, file.name, histogram) {
   info$swp <- shapiroTestWrapper(angles)$p
   info$mode <- histogram$mids[which.max(histogram$counts)]
   if (is.null(info$mode))
-    info$mode <- NA_real_
+    info$mode <- NA_real_  
+  if (is.null(info$median))
+      info$median <- NA_real_
   return(info)
 }
 
@@ -160,12 +162,22 @@ computeITAStats <- function(file.name, map, verbose)
   
   valences <- raw.radians[,1]
   radians <- raw.radians[,-1]
+  koosh <- 0
+  if(strsplit(as.character(valences[length(valences)])," ")[[1]][1]=="Koosh")
+  {
+    print(paste0("Koosh ball with ",strsplit(as.character(valences[length(valences)])," ")[[1]][10]," connections detected in ",file.name))
+    koosh <- strsplit(as.character(valences[length(valences)])," ")[[1]][10]
+    valences<-valences[1:length(valences)-1]
+    valences<-as.numeric(as.character(valences))
+    radians<-radians[1:length(valences),]
+  }
+  
   angles <- radians / pi * 180
   
-  if(valences[1]==3) angles3 <- as.numeric(angles[1,]) else angles3 <-c()
-  if(valences[2]==4) angles4 <- as.numeric(angles[2,]) else angles4 <-c()
-  if(valences[3]==5) angles5 <- as.numeric(angles[3,]) else angles5 <-c()
-  if(valences[4]==6) angles6 <- as.numeric(angles[4,]) else angles6 <-c()
+  if(!is.na(valences[1]) & valences[1]==3) angles3 <- as.numeric(angles[1,]) else angles3 <-c()
+  if(!is.na(valences[2]) & valences[2]==4) angles4 <- as.numeric(angles[2,]) else angles4 <-c()
+  if(!is.na(valences[3]) & valences[3]==5) angles5 <- as.numeric(angles[3,]) else angles5 <-c()
+  if(!is.na(valences[4]) & valences[4]==6) angles6 <- as.numeric(angles[4,]) else angles6 <-c()
   
   angles3 = angles3[which(is.finite(as.numeric(angles[1,])))]
   angles4 = angles4[which(is.finite(as.numeric(angles[2,])))]
@@ -284,9 +296,15 @@ computeITAStats <- function(file.name, map, verbose)
              size = 3
            ))
   
+  #add Koosh ball connectivity if present
+  if(koosh>0)
+  {
+    plot <- plot + annotate("text", x=4.5, y=75, size=6, label=paste0(koosh,"-valent node!"))
+  }
+  
   #beautify plot
-  plot <- plot + annotate("text", x=5.5, y=95, size=6, label=paste0("% higher valence: ",round(100-sum(plot.proportions$percentages))))
-  plot <- plot + annotate("text", x=5.5, y=90, size=6, label=paste0("total # nodes: ",number.of.nodes))
+  plot <- plot + annotate("text", x=5, y=95, size=6, label=paste0("% higher valence: ",round(100-sum(plot.proportions$percentages))))
+  plot <- plot + annotate("text", x=5, y=85, size=6, label=paste0("total # nodes: ",number.of.nodes))
   plot <- plot + scale_colour_manual(values = cbbPalette) +ylim(0,100)
   plot <-
     plot + theme_bw(base_size = 20) + theme(
@@ -303,7 +321,7 @@ computeITAStats <- function(file.name, map, verbose)
   #plot <- plot + scale_colour_hue(c=hue.vector, l=luminescence.vector)
   ggsave(
     filename = paste0(
-      "../../individual-plots/proportions-",gsub(pattern='.csv', replacement="",file.name),".png")
+      "../../individual-plots/proportions-",gsub(pattern='.csv', replacement="",file.name),".png"),width = 12, height = 12, units = "cm"
   )
   
   results <-
@@ -339,8 +357,8 @@ if (run==1)
   working.directory <- "~/Documents/data/ITA-test/"
 } else if (run==2)
 {
-  #working.directory <- "~/Documents/data/ITA/cat-test/despeckle/"
-  #current.noise.removal.operation <- "number of despeckle operations"
+  working.directory <- "~/Documents/data/ITA/cat-test/despeckle/"
+  current.noise.removal.operation <- "number of despeckle operations"
   
   #working.directory <- "~/Documents/data/ITA/cat-test/median-increasing-radius/"
   #current.noise.removal.operation <- "3D median filter radius [voxels]"
@@ -349,13 +367,13 @@ if (run==1)
   #current.noise.removal.operation <- "number of erode and dilate operations"
 
   #working.directory <- "~/Documents/data/ITA/cat-test/median-3x3x3/"
-  #current.noise.removal.operation <- "number of 3D median filter (radius 1) operations"
+   #current.noise.removal.operation <- "3D median filter (radius 1) operations"
 
   #working.directory <- "~/Documents/data/ITA/cat-test/median-5x5x5/"
-  #current.noise.removal.operation <- "number of 3D median filter (radius 2) operations"
+  #current.noise.removal.operation <- "3D median filter (radius 2) operations"
   
-  working.directory <- "~/Documents/data/ITA/cat-test/median-7x7x7/"
-  current.noise.removal.operation <- "number of 3D median filter (radius 3) operations"
+  #working.directory <- "~/Documents/data/ITA/cat-test/median-7x7x7/"
+  #current.noise.removal.operation <- "3D median filter (radius 3) operations"
   
   
 } else if (run==3)
@@ -470,7 +488,6 @@ for (current.perc.thickness in enumerationOfThicknessFiles)
   five.node.data <- as.matrix(five.node.data)
   six.node.data <- as.matrix(six.node.data)
 
-
   colnames(three.node.data) <- unlist(three.node.data[1,])
   colnames(four.node.data) <- unlist(four.node.data[1,])
   colnames(five.node.data) <- unlist(five.node.data[1,])
@@ -497,7 +514,9 @@ for (current.perc.thickness in enumerationOfThicknessFiles)
       getMassFromBinomial(file.to.binomial.map$binomial[index])
     if(run==2)
     {
-      mass.data[i] <- as.numeric(gsub(pattern = "\\D", replacement = "", file.to.binomial.map$file.name[index]))
+      number.of.noise.removal.operations <- unlist(strsplit(file.to.binomial.map$file.name[index],"_"))
+      number.of.noise.removal.operations <- number.of.noise.removal.operations[length(number.of.noise.removal.operations)-1]
+      mass.data[i] <- as.numeric(number.of.noise.removal.operations)
       abbreviated.names[i] <- " ";
     }
   }
@@ -592,7 +611,12 @@ for (current.perc.thickness in enumerationOfThicknessFiles)
                colour = valence,
                label = name,
                size=3
-             )) + geom_point(size=3)+geom_text_repel(aes(x = mass,y = ydata,label=name),show.legend = FALSE)
+             )) + geom_point(size=3)
+    
+    if(run!=2) 
+    {
+      plot <- plot + geom_text_repel(aes(x = mass,y = ydata,label=name),show.legend = FALSE)
+    }
     
     #beautify plot
     plot <- plot + scale_colour_manual(values = cbbPalette)# + scale_colour_hue(c=hue.vector, l=luminescence.vector)
@@ -604,7 +628,7 @@ for (current.perc.thickness in enumerationOfThicknessFiles)
         axis.line = element_line(colour = "black")
       ) + guides(size=FALSE)
     plot <-
-      plot + ggtitle(var.names[var.index])+ ylab(var.names[var.index])
+      plot + ylab(var.names[var.index])
     
     if (run==1)
     {
@@ -630,7 +654,10 @@ for (current.perc.thickness in enumerationOfThicknessFiles)
         "-",
         var.names[var.index],
         ".png"
-      )
+      ),
+      width = 6.02,
+      height = 3.44,
+      units = "in"
     )
   }
 }

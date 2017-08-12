@@ -43,7 +43,8 @@ def writeITAsForAllTiffsInDirectory(directory,percentageThickness):
 	    	print(currentThickness)
 	    	counter=counter+1
 			
-		#execute ITA	    
+	        #execute ITA	
+	        IJ.run("Clear BoneJ results");    
 	        currentImageName = os.path.join(directory, fileName)
 	        currentImage = IJ.openImage(currentImageName)
 	        IJ.run(currentImage, "Set Scale...", "distance=0 known=0 pixel=1 unit=pixel");
@@ -63,9 +64,17 @@ def writeITAsForAllTiffsInDirectory(directory,percentageThickness):
 	        	for i,angles in enumerate(currentAnglesList):
 	        		if(i>0):
 	        			print([int(currentAnglesList.getColumnHeader(i))])
-	        			anglesWriter.writerow([int(currentAnglesList.getColumnHeader(i))]+angles)
-	       		currentAnglesList.setRowCount(0)
+	        			if(int(currentAnglesList.getColumnHeader(i))<20):
+	        				anglesWriter.writerow([int(currentAnglesList.getColumnHeader(i))]+angles)
+		        		else:
+		        			anglesWriter.writerow([int(currentAnglesList.getColumnHeader(i))]+angles)
+		        			anglesWriter.writerow(['Koosh ball alert: there is a node with valence '+currentAnglesList.getColumnHeader(i)])
+		        			currentAnglesList.setRowCount(0)
+		        			break
+	        	currentAnglesList.setRowCount(0)
 	        anglesFile.close()
+				
+	       		
 
 	        #save edge coordinates
 	        currentEdgeList = wrapperInstance.getOutput("centroidTable")
@@ -89,9 +98,9 @@ def writeITAsForAllTiffsInDirectory(directory,percentageThickness):
 	    else:
 	        continue
 
-workingDirectories = ["/media/rvc_projects/Research_Storage/Doube_Michael/Felder/images/ITA-validation/median-7x7x7/skeleton"]
+workingDirectories = ["/home/alessandro/Documents/data/ITA/cat-test/median-increasing-radius/skeleton","/home/alessandro/Documents/data/ITA/cat-test/erode-dilate/skeleton","/home/alessandro/Documents/data/ITA/cat-test/despeckle/skeleton"]
 
-for j in range(0,1):
+for j in range(0,len(workingDirectories)):
 	os.chdir(workingDirectories[j])
 	for i in range(1,20):
 		print(workingDirectories[j])	
