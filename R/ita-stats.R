@@ -101,6 +101,9 @@ doCorrelationTests <- function(masses, data) {
       log10test <-
         cor.test(log10(masses), log10(unlist(three.node.data[var.index,])), method = "spearman")
       print(c("logarithmic", log10test$p.value, log10test$estimate))
+      log10test <-
+        cor.test(log10(masses), log10(unlist(four.node.data[var.index,])), method = "spearman")
+      print(c("logarithmic", log10test$p.value, log10test$estimate))
     }
   }
   else
@@ -206,7 +209,8 @@ computeITAStats <- function(file.name, map, verbose)
   plot.title.name <- file.name
   if (run==2)
   {
-    plot.title.name <- paste0(gsub(pattern = "\\D", replacement = "", unlist(strsplit(file.name,"-"))[4])," ",current.noise.removal.operation)
+    unlisted.file.name <- unlist(strsplit(file.name,"-"))
+    plot.title.name <- paste0(gsub(pattern = "\\D", replacement = "", unlisted.file.name[length(unlisted.file.name)])," ",current.noise.removal.operation)
   }
     
   if (length(angles3) > 0)
@@ -299,7 +303,7 @@ computeITAStats <- function(file.name, map, verbose)
   #add Koosh ball connectivity if present
   if(koosh>0)
   {
-    plot <- plot + annotate("text", x=4.5, y=75, size=6, label=paste0(koosh,"-valent node!"))
+    plot <- plot + annotate("text", x=5, y=75, size=6, label=paste0(koosh,"-valent node!"))
   }
   
   #beautify plot
@@ -347,7 +351,7 @@ computeITAStats <- function(file.name, map, verbose)
 }
 
 
-run <- 2 #enum variable: 1=test on metal prints, 2=run as validation study, 3=run as scaling study
+run <- 3 #enum variable: 1=test on metal prints, 2=run as validation study, 3=run as scaling study
 #hue.vector <- c(100,100,50,100) #default:100
 #luminescence.vector <- c(65,65,40,65) #default:65
 
@@ -357,17 +361,17 @@ if (run==1)
   working.directory <- "~/Documents/data/ITA-test/"
 } else if (run==2)
 {
-  working.directory <- "~/Documents/data/ITA/cat-test/despeckle/"
-  current.noise.removal.operation <- "number of despeckle operations"
+  #working.directory <- "~/Documents/data/ITA/cat-test/despeckle/"
+  #current.noise.removal.operation <- "despeckle operations"
   
   #working.directory <- "~/Documents/data/ITA/cat-test/median-increasing-radius/"
   #current.noise.removal.operation <- "3D median filter radius [voxels]"
   
   #working.directory <- "~/Documents/data/ITA/cat-test/erode-dilate/"
-  #current.noise.removal.operation <- "number of erode and dilate operations"
+  #current.noise.removal.operation <- "erode and dilate operations"
 
   #working.directory <- "~/Documents/data/ITA/cat-test/median-3x3x3/"
-   #current.noise.removal.operation <- "3D median filter (radius 1) operations"
+  #current.noise.removal.operation <- "3D median filter (radius 1) operations"
 
   #working.directory <- "~/Documents/data/ITA/cat-test/median-5x5x5/"
   #current.noise.removal.operation <- "3D median filter (radius 2) operations"
@@ -375,19 +379,22 @@ if (run==1)
   #working.directory <- "~/Documents/data/ITA/cat-test/median-7x7x7/"
   #current.noise.removal.operation <- "3D median filter (radius 3) operations"
   
+  #alpaca test
+  working.directory <- "/media/rvc_projects/Research_Storage/Doube_Michael/Felder/images/ITA-alpaca/"
+  current.noise.removal.operation <- "3D median filter (radius 2) operations"
   
 } else if (run==3)
 {
-  working.directory <- "~/Documents/data/ITA/"
+  working.directory <- "/media/alessandro/A6E8FE87E8FE5551/Users/afelder/Desktop/ITA-samples/"
 } else 
 {
     stop("invalid value for variable run")
 }
 
 setwd(working.directory)
-enumerationOfThicknessFiles = ((1:19) * 10)
+enumerationOfThicknessFiles = ((5:7) * 10)
 
-for (current.perc.thickness in enumerationOfThicknessFiles)
+for (perc.thickness in enumerationOfThicknessFiles)
 {
   binomial.to.mass.map <- c()
   file.to.binomial.map <- c()
@@ -454,7 +461,7 @@ for (current.perc.thickness in enumerationOfThicknessFiles)
   }
   
   path.of.interest <-
-    paste0("./angles/cutOff", current.perc.thickness, "Percent/")
+    paste0("./angles/cutOff", perc.thickness, "Percent/")
   angles.files <-
     list.files(path = path.of.interest, pattern = 'angles*')
   setwd(path.of.interest)
@@ -469,7 +476,7 @@ for (current.perc.thickness in enumerationOfThicknessFiles)
   raw.results <- compact(raw.results)
   if(length(raw.results)==0)
   {
-    warning(paste0("ITA: no data for ",current.perc.thickness," % thickness cutoff"))
+    warning(paste0("ITA: no data for ",perc.thickness," % thickness cutoff"))
     break
   }
   difference <- original.length-length(raw.results)
@@ -501,7 +508,7 @@ for (current.perc.thickness in enumerationOfThicknessFiles)
       gsub(pattern = "_skeleton.csv", replacement = ".tif", current.file)
     binary.file <-
       gsub(
-        pattern = paste0("angles-percThick-", current.perc.thickness, "-"),
+        pattern = paste0("angles-percThick-", perc.thickness, "-"),
         replacement = "",
         binary.file
       )
@@ -514,8 +521,12 @@ for (current.perc.thickness in enumerationOfThicknessFiles)
       getMassFromBinomial(file.to.binomial.map$binomial[index])
     if(run==2)
     {
-      number.of.noise.removal.operations <- unlist(strsplit(file.to.binomial.map$file.name[index],"_"))
-      number.of.noise.removal.operations <- number.of.noise.removal.operations[length(number.of.noise.removal.operations)-1]
+      #for cat
+      #number.of.noise.removal.operations <- unlist(strsplit(file.to.binomial.map$file.name[index],"_"))
+      #number.of.noise.removal.operations <- number.of.noise.removal.operations[length(number.of.noise.removal.operations)-1]
+      #for alpaca
+      number.of.noise.removal.operations <- unlist(strsplit(file.to.binomial.map$file.name[index],"-"))
+      number.of.noise.removal.operations <- number.of.noise.removal.operations[2]
       mass.data[i] <- as.numeric(number.of.noise.removal.operations)
       abbreviated.names[i] <- " ";
     }
@@ -542,7 +553,7 @@ for (current.perc.thickness in enumerationOfThicknessFiles)
   sink(
     file = paste0(
       "comparative-summaries/cut-off-at-",
-      current.perc.thickness,
+      perc.thickness,
       "-percent-avg-thickness-3-node-data-summary.txt"
     )
   )
@@ -551,7 +562,7 @@ for (current.perc.thickness in enumerationOfThicknessFiles)
   sink(
     file = paste0(
       "comparative-summaries/cut-off-at-",
-      current.perc.thickness,
+      perc.thickness,
       "-percent-avg-thickness-4-node-data-summary.txt"
     )
   )
@@ -560,7 +571,7 @@ for (current.perc.thickness in enumerationOfThicknessFiles)
   sink(
     file = paste0(
       "comparative-summaries/cut-off-at-",
-      current.perc.thickness,
+      perc.thickness,
       "-percent-avg-thickness-5-node-data-summary.txt"
     )
   )
@@ -569,7 +580,7 @@ for (current.perc.thickness in enumerationOfThicknessFiles)
   sink(
     file = paste0(
       "comparative-summaries/cut-off-at-",
-      current.perc.thickness,
+      perc.thickness,
       "-percent-avg-thickness-6-node-data-summary.txt"
     )
   )
@@ -627,8 +638,13 @@ for (current.perc.thickness in enumerationOfThicknessFiles)
         panel.grid.minor = element_blank(),
         axis.line = element_line(colour = "black")
       ) + guides(size=FALSE)
-    plot <-
-      plot + ylab(var.names[var.index])
+    
+    ylabel <- var.names[var.index]
+    if(var.index %in% c(3,4,5,7))
+    {
+      ylabel <- paste0(ylabel," [\U00B0]")
+    }
+    plot <-plot + ylab(ylabel)
     
     if (run==1)
     {
@@ -639,9 +655,7 @@ for (current.perc.thickness in enumerationOfThicknessFiles)
     }
     else if(run==2)
     {
-        plot <-
-        plot +
-        xlab(current.noise.removal.operation)
+        plot <- plot+xlab(current.noise.removal.operation)+scale_x_continuous(breaks=mass.data)
     }
     else if (run==3){
       plot <-
@@ -650,13 +664,13 @@ for (current.perc.thickness in enumerationOfThicknessFiles)
     ggsave(
       filename = paste0(
         "comparative-plots/plot-thickness-perc",
-        current.perc.thickness,
+        perc.thickness,
         "-",
         var.names[var.index],
         ".png"
       ),
-      width = 6.02,
-      height = 3.44,
+      width = 8.02,
+      height = 8.02,
       units = "in"
     )
   }

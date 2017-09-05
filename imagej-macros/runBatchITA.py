@@ -37,7 +37,7 @@ def writeITAsForAllTiffsInDirectory(directory,percentageThickness):
 	    if fileName.endswith(".tif"):
 	    	#get trabecular thickness
 	    	print(fileName)
-	    	thicknessName = fileName.replace("purified_skeleton.tif","purified.tif")
+	    	thicknessName = fileName.replace("_skeleton.tif",".tif")
 	    	print(thicknessName)
 	    	currentThickness = thicknessMeasurements[[i for i, t in enumerate(thicknessNames) if t==thicknessName][0]]
 	    	print(currentThickness)
@@ -98,11 +98,11 @@ def writeITAsForAllTiffsInDirectory(directory,percentageThickness):
 	    else:
 	        continue
 
-workingDirectories = ["/home/alessandro/Documents/data/ITA/cat-test/median-increasing-radius/skeleton","/home/alessandro/Documents/data/ITA/cat-test/erode-dilate/skeleton","/home/alessandro/Documents/data/ITA/cat-test/despeckle/skeleton"]
+workingDirectories = ["/media/alessandro/A6E8FE87E8FE5551/Users/afelder/Desktop/ITA-samples/skeleton/"]
 
 for j in range(0,len(workingDirectories)):
 	os.chdir(workingDirectories[j])
-	for i in range(1,20):
+	for i in range(5,8):
 		print(workingDirectories[j])	
 		writeITAsForAllTiffsInDirectory(workingDirectories[j],float(i)/10.0)
 
