@@ -96,19 +96,17 @@ doCorrelationTests <- function(masses, data) {
         cor.test(masses, unlist(data[var.index,]), method = "spearman")
       print(c("linear", test$p.value, test$estimate))
       logtest <-
-        cor.test(log(masses), log(unlist(three.node.data[var.index,])), method = "spearman")
+        cor.test(log(masses), log(unlist(data[var.index,])), method = "spearman")
       print(c("logarithmic", logtest$p.value, logtest$estimate))
       log10test <-
-        cor.test(log10(masses), log10(unlist(three.node.data[var.index,])), method = "spearman")
-      print(c("logarithmic", log10test$p.value, log10test$estimate))
-      log10test <-
-        cor.test(log10(masses), log10(unlist(four.node.data[var.index,])), method = "spearman")
+        cor.test(log10(masses), log10(unlist(data[var.index,])), method = "spearman")
       print(c("logarithmic", log10test$p.value, log10test$estimate))
     }
   }
   else
   {
-    warning("Not enough data points for meaningful correlation.")
+    warning("Not enough data points for meaningful correlation. Printing raw data.")
+    print(data)
   }
 }
 
@@ -124,33 +122,37 @@ robustRadiansReader = function(file.name)
   )
 }
 
+
 saveITAHistogram <-
   function(hist, valence, filename, name, perc.thickness) {
     histogram <- eval(hist)
     no.space.name = gsub(pattern = " ", replacement = "-",filename)
     png(paste0("../../individual-plots/histo-valence",valence,"-",gsub(".csv","",no.space.name),".png"))
+    mar.default <- c(5, 4, 4, 2)
+    par(mar = mar.default + c(1, 2, 0, 0)) 
+    fontSizeFactor <- 2
     plot(
       histogram,
       freq = FALSE,
+      xaxt = 'n',
       xlim = c(0, 180),
       ylim = c(0,max(7,histogram$density)),
-      xaxt = 'n',
       xlab = "angle [\U00B0]",
       ylab = "bin frequency %",
+      cex.lab=fontSizeFactor,
+      cex.axis=fontSizeFactor,
       main = paste0(
-        "ITA distribution (",
+        "(",
         valence,
-        "-valent-nodes)\n",
-        name,
-        ", cutoff ",
-        perc.thickness,"% average thickness"
+        "-valent nodes)"
       ),
       col = cbbPalette[valence - 2]
     )
     axis(
       side = 1,
-      at = seq(0, 180, 30),
-      labels = seq(0, 180, 30)
+      cex.axis=fontSizeFactor-0.5,
+      at=seq(0, 180,by=30),
+      labels=seq(0,180,by=30)
     )
     dev.off()
   }
@@ -216,7 +218,7 @@ computeITAStats <- function(file.name, map, verbose)
   if (length(angles3) > 0)
   {
       histogram3 <-
-      hist(angles3, breaks = 45, plot = F)
+      hist(angles3, breaks = seq(0,180,4), plot = F)
     histogram3$density = histogram3$counts / sum(histogram3$counts) * 100
     val <- 3
     saveITAHistogram(
@@ -230,7 +232,7 @@ computeITAStats <- function(file.name, map, verbose)
   if (length(angles4) > 0)
   {
     histogram4 <-
-      hist(angles4, breaks = 45, plot = F)
+      hist(angles4, breaks = seq(0,180,4), plot = F)
     histogram4$density = histogram4$counts / sum(histogram4$counts) * 100
     val <- 4
     saveITAHistogram(
@@ -244,7 +246,7 @@ computeITAStats <- function(file.name, map, verbose)
   if (length(angles5) > 0)
   {
     histogram5 <-
-      hist(angles5, breaks = 45, plot = F)
+      hist(angles5, breaks = seq(0,180,4), plot = F)
     histogram5$density = histogram5$counts / sum(histogram5$counts) * 100
     val <- 5
     saveITAHistogram(
@@ -258,7 +260,7 @@ computeITAStats <- function(file.name, map, verbose)
   if (length(angles6) > 0)
   {
     histogram6 <-
-      hist(angles6, breaks = 45, plot = F)
+      hist(angles6, breaks = seq(0,180,4), plot = F)
     histogram6$density = histogram6$counts / sum(histogram6$counts) * 100
     val <- 6
     saveITAHistogram(
@@ -318,9 +320,8 @@ computeITAStats <- function(file.name, map, verbose)
       axis.line = element_line(colour = "black"),
       legend.position="none"
     )
-  plot <-
-    plot + ggtitle(binomial) +
-    xlab("node connectivity") + ylab("node type %")
+  #plot <- plot + ggtitle(binomial)
+  plot <- plot + xlab("node valence") + ylab("node type %")
   
   #plot <- plot + scale_colour_hue(c=hue.vector, l=luminescence.vector)
   ggsave(
@@ -351,14 +352,14 @@ computeITAStats <- function(file.name, map, verbose)
 }
 
 
-run <- 3 #enum variable: 1=test on metal prints, 2=run as validation study, 3=run as scaling study
+run <- 1 #enum variable: 1=test on metal prints, 2=run as validation study, 3=run as scaling study
 #hue.vector <- c(100,100,50,100) #default:100
 #luminescence.vector <- c(65,65,40,65) #default:65
 
 current.noise.removal.operation <- "unknown"
 if (run==1)
 {
-  working.directory <- "~/Documents/data/ITA-test/"
+  working.directory <- "~/Documents/data/ITA/metal-test-order-dependent/"
 } else if (run==2)
 {
   #working.directory <- "~/Documents/data/ITA/cat-test/despeckle/"
@@ -392,7 +393,7 @@ if (run==1)
 }
 
 setwd(working.directory)
-enumerationOfThicknessFiles = ((5:7) * 10)
+enumerationOfThicknessFiles = ((10:10) * 10)
 
 for (perc.thickness in enumerationOfThicknessFiles)
 {
@@ -452,8 +453,8 @@ for (perc.thickness in enumerationOfThicknessFiles)
     binomial.to.mass.map$MSW05_Binomial = c("Rhombic dodecahedron", "Stochastic lattice")
     binomial.to.mass.map$X5.1_AdultBodyMass_g = c(10, 100)
     
-    file.to.binomial.map$file.name = c("Dod Ti binary1_purified-dilated-purified-eroded.tif",
-                                       "Stoch Ti binary.tif")
+    file.to.binomial.map$file.name = c("useClusters-False-Dod Ti binary1.tif",
+                                       "useClusters-False-Stoch Ti binary.tif")
     file.to.binomial.map$binomial = c("Rhombic dodecahedron", "Stochastic lattice")
     
     abbreviated.names <- vector(mode = "character", length = 2)
@@ -587,9 +588,9 @@ for (perc.thickness in enumerationOfThicknessFiles)
   doCorrelationTests(mass.data, six.node.data)
   sink()
   
-  if(run==1)
+  if(run==2)#possibility to look at specific size range
   {
-    indices.to.keep = mass.data[,1]>1e3 & mass.data[,1]<15e3
+    indices.to.keep = mass.data[,1]>0 & mass.data[,1]<1e10
     mass.data <- mass.data[indices.to.keep]
     abbreviated.names <- abbreviated.names[indices.to.keep]
     three.node.data <- as.matrix(three.node.data[,indices.to.keep])
