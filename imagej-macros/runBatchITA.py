@@ -11,7 +11,7 @@ from ij import IJ
 # 	../perc-output
 # parallel directories
 # pre-existing files in those directories will be overwritten if they match the chosen names
-def writeITAsForAllTiffsInDirectory(directory,percentageThickness):
+def writeITAsForAllTiffsInDirectory(directory,percentageThickness,orderIndependent):
 	#precalculate thickness stuff
 	thicknessFile = open("../binary/thickness/all-thickness-measurements.csv",'rb')
 	thicknessReader = csv.reader(thicknessFile, delimiter=',')
@@ -27,9 +27,9 @@ def writeITAsForAllTiffsInDirectory(directory,percentageThickness):
 
 	#other setting up
 	percentThicknessUsedAsCutoff = str(int(percentageThickness*100))
-	edgeCoordsFilePrefix = '../edge-coordinates/edge-coordinates-percThick-'+percentThicknessUsedAsCutoff
-	anglesFilePrefix = '../angles/angles-percThick-'+percentThicknessUsedAsCutoff
-	percentageFileName = '../perc-output/percentages-percThick'+percentThicknessUsedAsCutoff+'.csv'
+	edgeCoordsFilePrefix = '../edge-coordinates/edge-coordinates-percThick-'+percentThicknessUsedAsCutoff+'-useClusters-'+str(orderIndependent)
+	anglesFilePrefix = '../angles/angles-percThick-'+percentThicknessUsedAsCutoff+'-useClusters-'+str(orderIndependent)
+	percentageFileName = '../perc-output/percentages-percThick'+percentThicknessUsedAsCutoff+'-useClusters-'+str(orderIndependent)+'.csv'
 	open(percentageFileName, 'w').close() #delete contents from previous run
 
 	counter=0
@@ -52,7 +52,7 @@ def writeITAsForAllTiffsInDirectory(directory,percentageThickness):
 	        print(percentageThickness)
 	        print(currentThickness)
 	        print(round(float(percentageThickness*currentThickness)))
-	        wrapper = cs.run("org.bonej.wrapperPlugins.IntertrabecularAngleWrapper", True, ["inputImage",currentImage, "minimumValence", 3, "maximumValence", 50, "minimumTrabecularLength", round(float(percentageThickness*currentThickness)),"marginCutOff",round(float(percentageThickness*currentThickness)),"iteratePruning", False, "useClusters", True, "printCentroids", True,"printCulledEdgePercentages", True])
+	        wrapper = cs.run("org.bonej.wrapperPlugins.IntertrabecularAngleWrapper", True, ["inputImage",currentImage, "minimumValence", 3, "maximumValence", 50, "minimumTrabecularLength", round(float(percentageThickness*currentThickness)),"marginCutOff",round(float(percentageThickness*currentThickness)),"iteratePruning", False, "useClusters", orderIndependent, "printCentroids", True,"printCulledEdgePercentages", True])
 	        currentImage.close()
 	        wrapperInstance = wrapper.get()
 	        
@@ -98,11 +98,12 @@ def writeITAsForAllTiffsInDirectory(directory,percentageThickness):
 	    else:
 	        continue
 
-workingDirectories = ["/media/alessandro/A6E8FE87E8FE5551/Users/afelder/Desktop/ITA-samples/skeleton/"]
+#workingDirectories = ["/media/alessandro/A6E8FE87E8FE5551/Users/afelder/Desktop/ITA-samples/skeleton/"]
+workingDirectories = ["/home/alessandro/Documents/data/ITA/cat-test/erode-dilate/skeleton/"]
 
 for j in range(0,len(workingDirectories)):
 	os.chdir(workingDirectories[j])
-	for i in range(5,8):
+	for i in range(1,19):
 		print(workingDirectories[j])	
-		writeITAsForAllTiffsInDirectory(workingDirectories[j],float(i)/10.0)
+		writeITAsForAllTiffsInDirectory(workingDirectories[j],float(i)/10.0,True)
 
