@@ -37,7 +37,7 @@ def writeITAsForAllTiffsInDirectory(directory,percentageThickness,orderIndepende
 	    if fileName.endswith(".tif"):
 	    	#get trabecular thickness
 	    	print(fileName)
-	    	thicknessName = fileName.replace("_skeleton.tif",".tif")
+	    	thicknessName = fileName.replace("-skeleton.tif","-binary.tif")
 	    	print(thicknessName)
 	    	currentThickness = thicknessMeasurements[[i for i, t in enumerate(thicknessNames) if t==thicknessName][0]]
 	    	print(currentThickness)
@@ -52,7 +52,7 @@ def writeITAsForAllTiffsInDirectory(directory,percentageThickness,orderIndepende
 	        print(percentageThickness)
 	        print(currentThickness)
 	        print(round(float(percentageThickness*currentThickness)))
-	        wrapper = cs.run("org.bonej.wrapperPlugins.IntertrabecularAngleWrapper", True, ["inputImage",currentImage, "minimumValence", 3, "maximumValence", 50, "minimumTrabecularLength", round(float(percentageThickness*currentThickness)),"marginCutOff",round(float(percentageThickness*currentThickness)),"iteratePruning", False, "useClusters", orderIndependent, "printCentroids", True,"printCulledEdgePercentages", True])
+	        wrapper = cs.run("org.bonej.wrapperPlugins.IntertrabecularAngleWrapper", True, ["inputImage",currentImage, "minimumValence", 3, "maximumValence", 50, "minimumTrabecularLength", round(float(percentageThickness*currentThickness)),"marginCutOff",round(float(percentageThickness*currentThickness)),"iteratePruning", True, "useClusters", orderIndependent, "printCentroids", True,"printCulledEdgePercentages", True])
 	        currentImage.close()
 	        wrapperInstance = wrapper.get()
 	        
@@ -98,12 +98,12 @@ def writeITAsForAllTiffsInDirectory(directory,percentageThickness,orderIndepende
 	    else:
 	        continue
 
-#workingDirectories = ["/media/alessandro/A6E8FE87E8FE5551/Users/afelder/Desktop/ITA-samples/skeleton/"]
-workingDirectories = ["/home/alessandro/Documents/data/ITA/cat-test/erode-dilate/skeleton/"]
+workingDirectories = ["/media/alessandro/A6E8FE87E8FE5551/Users/afelder/Desktop/ITA-cow-at-various-resolutions/skeleton/"]
+#workingDirectories = ["/home/alessandro/Documents/data/ITA/cat-test/median-increasing-radius/skeleton/"]
 
 for j in range(0,len(workingDirectories)):
 	os.chdir(workingDirectories[j])
-	for i in range(1,19):
+	for i in [4,5,6,7,10]:
 		print(workingDirectories[j])	
 		writeITAsForAllTiffsInDirectory(workingDirectories[j],float(i)/10.0,True)
 

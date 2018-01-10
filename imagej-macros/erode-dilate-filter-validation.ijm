@@ -1,19 +1,19 @@
 run("Close All")
 dir = "/home/alessandro/Documents/data/ITA/cat-test/"
-originalName = "RVC_domestic_cat_head_IJ_isodata_purified"
-for (i=0; i<10; i=i+1) 
+originalName = "RVC_domestic_cat_head-binary"
+for (i=0; i<8; i=i+1) 
 {
 	open(dir+originalName+".tif");
 	for(j=0; j<i;j++)
 	{
-		run("Erode", "stack");
+		run("Erode 3D", "stack");
 	}
 	setOption("BlackBackground", false);
 	run("Make Binary", "method=IJ_IsoData background=Dark calculate black");
 	run("Purify", "labelling=Mapped chunk=4 make_copy");
 	for(j=0; j<i;j++)
 	{
-		run("Dilate", "stack");
+		run("Dilate 3D", "stack");
 	}
 	saveAs("Tiff", dir+originalName+"_erode_dilate_"+i+"_purified.tif");
 	selectWindow(originalName+"_erode_dilate_"+i+"_purified.tif");

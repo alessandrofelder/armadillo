@@ -54,12 +54,18 @@ getAngleInfo <- function(angles, file.name, histogram) {
   info$mean <- mean(angles, na.rm = TRUE)
   info$sd <- sd(angles, na.rm = TRUE)
   info$median <- median(angles, na.rm = TRUE)
+  info$upperquartile <- quantile(angles, na.rm = TRUE, 0.75)
+  info$lowerquartile <- quantile(angles, na.rm = TRUE, 0.25)
   info$swp <- shapiroTestWrapper(angles)$p
   info$mode <- histogram$mids[which.max(histogram$counts)]
   if (is.null(info$mode))
     info$mode <- NA_real_  
   if (is.null(info$median))
-      info$median <- NA_real_
+    info$median <- NA_real_
+  if (is.null(info$upperquartile))
+    info$upperquartile <- NA_real_
+  if (is.null(info$median))
+    info$lowerquartile <- NA_real_
   return(info)
 }
 
@@ -131,6 +137,10 @@ saveITAHistogram <-
     mar.default <- c(5, 4, 4, 2)
     par(mar = mar.default + c(1, 2, 0, 0)) 
     fontSizeFactor <- 2
+    valenceTitlePart = paste0(
+      "(",
+      valence,
+      "-valent nodes)\n")
     plot(
       histogram,
       freq = FALSE,
@@ -141,10 +151,7 @@ saveITAHistogram <-
       ylab = "bin frequency %",
       cex.lab=fontSizeFactor,
       cex.axis=fontSizeFactor,
-      main = paste0(
-        "(",
-        valence,
-        "-valent nodes)"
+      main = substitute({bolditalic(ni)}, list(ni=name)
       ),
       col = cbbPalette[valence - 2]
     )
@@ -212,7 +219,14 @@ computeITAStats <- function(file.name, map, verbose)
   if (run==2)
   {
     unlisted.file.name <- unlist(strsplit(file.name,"-"))
-    plot.title.name <- paste0(gsub(pattern = "\\D", replacement = "", unlisted.file.name[length(unlisted.file.name)])," ",current.noise.removal.operation)
+    plot.title.name <- paste0(current.noise.removal.operation," ", gsub(pattern = "\\D", replacement = "", unlisted.file.name[length(unlisted.file.name)-1]))
+  }
+  if (run==3)
+  {
+    binary.file <- gsub("useClusters-True-","",tiff.file.name)
+    binary.file <- gsub(".tif","-binary.tif",binary.file)
+    index <- which(binary.file == file.to.binomial.map$file.name)
+    plot.title.name <- file.to.binomial.map$binomial[index]
   }
     
   if (length(angles3) > 0)
@@ -352,7 +366,7 @@ computeITAStats <- function(file.name, map, verbose)
 }
 
 
-run <- 1 #enum variable: 1=test on metal prints, 2=run as validation study, 3=run as scaling study
+run <- 3 #enum variable: 1=test on metal prints, 2=run as validation study, 3=run as scaling study
 #hue.vector <- c(100,100,50,100) #default:100
 #luminescence.vector <- c(65,65,40,65) #default:65
 
@@ -380,20 +394,23 @@ if (run==1)
   #working.directory <- "~/Documents/data/ITA/cat-test/median-7x7x7/"
   #current.noise.removal.operation <- "3D median filter (radius 3) operations"
   
+  working.directory <- "/media/alessandro/A6E8FE87E8FE5551/Users/afelder/Desktop/ITA-cow-at-various-resolutions/"
+  current.noise.removal.operation <- "resampling factor"
+  
   #alpaca test
-  working.directory <- "/media/rvc_projects/Research_Storage/Doube_Michael/Felder/images/ITA-alpaca/"
-  current.noise.removal.operation <- "3D median filter (radius 2) operations"
+  #working.directory <- "/media/rvc_projects/Research_Storage/Doube_Michael/Felder/images/ITA-alpaca/"
+  #current.noise.removal.operation <- "3D median filter (radius 2) operations"
   
 } else if (run==3)
 {
-  working.directory <- "/media/alessandro/A6E8FE87E8FE5551/Users/afelder/Desktop/ITA-samples/"
+  working.directory <- "/media/alessandro/A6E8FE87E8FE5551/Users/afelder/Desktop/ITA-samples-resampled-after-binarization/"
 } else 
 {
     stop("invalid value for variable run")
 }
 
 setwd(working.directory)
-enumerationOfThicknessFiles = ((10:10) * 10)
+enumerationOfThicknessFiles = (c(4:7,10) * 10)
 
 for (perc.thickness in enumerationOfThicknessFiles)
 {
@@ -506,10 +523,16 @@ for (perc.thickness in enumerationOfThicknessFiles)
   {
     current.file <- unlisted[i]
     binary.file <-
-      gsub(pattern = "_skeleton.csv", replacement = ".tif", current.file)
+      gsub(pattern = "-skeleton.csv", replacement = "-binary.tif", current.file)
     binary.file <-
       gsub(
         pattern = paste0("angles-percThick-", perc.thickness, "-"),
+        replacement = "",
+        binary.file
+      )
+    binary.file <-
+      gsub(
+        pattern = paste0("useClusters-True-"),
         replacement = "",
         binary.file
       )
@@ -519,15 +542,15 @@ for (perc.thickness in enumerationOfThicknessFiles)
     abbreviated.names[i] <-
       abbreviate(file.to.binomial.map$binomial[index])
     mass.data[i] <-
-      getMassFromBinomial(file.to.binomial.map$binomial[index])
+      getMassFromBinomial(file.to.binomial.map$binomial[index])/1000.0
     if(run==2)
     {
-      #for cat
-      #number.of.noise.removal.operations <- unlist(strsplit(file.to.binomial.map$file.name[index],"_"))
-      #number.of.noise.removal.operations <- number.of.noise.removal.operations[length(number.of.noise.removal.operations)-1]
-      #for alpaca
+      #for cat and cow
       number.of.noise.removal.operations <- unlist(strsplit(file.to.binomial.map$file.name[index],"-"))
-      number.of.noise.removal.operations <- number.of.noise.removal.operations[2]
+      number.of.noise.removal.operations <- number.of.noise.removal.operations[length(number.of.noise.removal.operations)-1]
+      #for alpaca
+      #number.of.noise.removal.operations <- unlist(strsplit(file.to.binomial.map$file.name[index],"_"))
+      #number.of.noise.removal.operations <- number.of.noise.removal.operations[2]
       mass.data[i] <- as.numeric(number.of.noise.removal.operations)
       abbreviated.names[i] <- " ";
     }
@@ -546,6 +569,8 @@ for (perc.thickness in enumerationOfThicknessFiles)
       "mean",
       "standard deviation",
       "median",
+      "upper quartile",
+      "lower quartile",
       "SW test p value",
       "mode",
       "proportion"
@@ -597,7 +622,7 @@ for (perc.thickness in enumerationOfThicknessFiles)
     four.node.data <- as.matrix(four.node.data[,indices.to.keep])
   }
   
-  for (var.index in c(2, 3, 5, 8, 4, 6, 7))
+  for (var.index in c(2, 3, 4, 5, 6, 7, 9, 10))
   {
     #set up data for plotting
     current.data <- data.frame(
@@ -637,15 +662,25 @@ for (perc.thickness in enumerationOfThicknessFiles)
         panel.border = element_blank(),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
-        axis.line = element_line(colour = "black")
+        axis.line = element_line(colour = "black"),
+        legend.position = "none"
       ) + guides(size=FALSE)
     
     ylabel <- var.names[var.index]
     if(var.index %in% c(3,4,5,7))
     {
       ylabel <- paste0(ylabel," [\U00B0]")
+      if(var.index!=4)
+      {
+        plot <- plot + scale_y_continuous(breaks=c(60,90,120,150), labels=c(60,90,120,150)) +ylim(c(60,150))
+      }
     }
     plot <-plot + ylab(ylabel)
+    
+    if(var.index==10)
+    {
+      plot <- plot + ylim(c(0,100))
+    }
     
     if (run==1)
     {
@@ -660,7 +695,7 @@ for (perc.thickness in enumerationOfThicknessFiles)
     }
     else if (run==3){
       plot <-
-        plot +scale_x_log10()+xlab("mass")
+        plot +scale_x_log10(labels=function(n){format(n, scientific = FALSE)})+xlab("adult body mass [kg]")
     }
     ggsave(
       filename = paste0(

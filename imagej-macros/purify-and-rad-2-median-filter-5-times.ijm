@@ -1,5 +1,5 @@
 run("Close All")
-dir = "/home/alessandro/Documents/data/ITA/binary/done/"
+dir = "/media/alessandro/A6E8FE87E8FE5551/Users/afelder/Desktop/ITA-samples/binary/"
 outputdir = "/media/alessandro/A6E8FE87E8FE5551/Users/afelder/Desktop/ITA-samples/"
 
 iterations = 5;

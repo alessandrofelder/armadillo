@@ -1,6 +1,6 @@
 run("Close All")
 dir = "/home/alessandro/Documents/data/ITA/cat-test/"
-originalName = "RVC_domestic_cat_head_IJ_isodata_purified"
+originalName = "RVC_domestic_cat_head-binary"
 for (i=0; i<20; i=i+1) 
 {
 	open(dir+originalName+".tif");
